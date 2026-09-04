@@ -1,0 +1,34 @@
+apiVersion: trex.example.io/v1
+kind: Rfc2544Throughput
+metadata:
+  name: testdev-rfc2544-strict-bootstrap
+spec:
+  safety:
+    isolatedLab: true
+  ports:
+    tx: lab-west
+    rx: lab-east
+    direction: unidirectional
+  mode: strict
+  limits:
+    portWaitTimeout: 30s
+    jobTimeout: 30m
+  packet:
+    ethernet:
+      src: 02:00:00:02:00:00
+      dst: 02:00:00:02:00:00
+    ipv4:
+      src: 198.18.0.1
+      dst: 198.19.0.1
+    udp:
+      srcPort: 49152
+      dstPort: 7
+  assertion:
+    minimumPercentLineRate:
+      "64": 0.01
+      "128": 0.01
+      "256": 0.01
+      "512": 0.01
+      "1024": 0.01
+      "1280": 0.01
+      "1518": 0.01

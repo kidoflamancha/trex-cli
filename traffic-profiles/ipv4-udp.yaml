@@ -1,0 +1,30 @@
+apiVersion: trex.example.io/catalog/v1
+kind: TrafficProfile
+metadata:
+  name: ipv4-udp
+  revision: 1
+  description: One-way IPv4/UDP traffic with a configurable wire frame size.
+parameters:
+  frame-size:
+    type: integer
+    default: 128
+    minimum: 64
+    maximum: 1518
+    description: Ethernet wire frame size including FCS.
+flows:
+  client-to-server:
+    from: client
+    to: server
+    weight: 1
+    frame:
+      wireSize: "${param.frame-size}"
+    packet:
+      ethernet:
+        src: "${role.client.mac}"
+        dst: "${role.server.mac}"
+      ipv4:
+        src: "${role.client.ipv4}"
+        dst: "${role.server.ipv4}"
+      udp:
+        srcPort: 49152
+        dstPort: 7

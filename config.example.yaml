@@ -1,0 +1,58 @@
+bindHost: 127.0.0.1
+bindPort: 8080
+logLevel: INFO
+databasePath: .trex-agent/jobs.sqlite3
+artifactRoot: .trex-agent/artifacts
+# Content-addressed result bundles are retained from their most recent write.
+artifactRetentionDays: 90
+# Unregistered files are only eligible for explicit orphan cleanup after this grace period.
+artifactOrphanGracePeriod: 24h
+trafficProfileRoot: traffic-profiles
+labPathRoot: lab-paths
+planRoot: .trex-plans
+captureRoot: .trex-captures
+
+logicalPorts:
+  - lab-west
+  - lab-east
+
+engine:
+  mode: simulated
+  stepDelayMs: 10
+
+safety:
+  version: lab-policy-1
+  allowedCidrs:
+    - 198.18.0.0/15
+  allowedMacPrefixes:
+    - "00:00:00"
+  # Opt in only for isolated LabPaths that explicitly declare broadcastDomain.
+  allowBroadcastStorms: false
+  maxConcurrentJobs: 4
+  maxJobTimeout: 8h
+  maxPortWaitTimeout: 10m
+  maxRunDuration: 120s
+  maxBurstPackets: 10000000
+  maxPercentL1: 100
+  # Keep at 1 unless the lab explicitly permits gradual strict-calibration ramps.
+  maxCalibrationGrowthFactor: 1
+  maxPps: 100000000
+  maxBpsL1: 100000000000
+  maxBpsL2: 100000000000
+  simulatedThroughputPercent: 100
+
+auth:
+  tokens:
+    - name: local-operator
+      role: operator
+      env: TREX_OPERATOR_TOKEN
+    - name: local-reader
+      role: read-only
+      env: TREX_READER_TOKEN
+
+# Native TLS is optional. For reverse-proxy TLS, keep bindHost on loopback and leave this unset.
+# tls:
+#   certFile: /etc/trex-agent/tls/server.crt
+#   keyFile: /etc/trex-agent/tls/server.key
+#   clientCaFile: /etc/trex-agent/tls/clients-ca.crt
+#   requireClientCertificate: true

@@ -1,0 +1,21 @@
+diff --git a/src/drivers/trex_ixgbe_fdir.c b/src/drivers/trex_ixgbe_fdir.c
+index 7b3656d0..a4be6c87 100644
+--- a/src/drivers/trex_ixgbe_fdir.c
++++ b/src/drivers/trex_ixgbe_fdir.c
+@@ -655,6 +655,16 @@ trex_ixgbe_fdir_configure(struct rte_eth_dev *dev)
+ 	int i;
+ 	enum rte_fdir_mode mode = dev->data->dev_conf.fdir_conf.mode;
+ 
++	/* X550 applies the MAC/VLAN key in PERFECT_MAC_VLAN mode, while
++	 * TRex stateless flow-stat rules populate only the flex bytes.
++	 * Keep the existing mode for other ixgbe controllers.
++	 */
++	if (hw->mac.type == ixgbe_mac_X550 &&
++	    mode == RTE_FDIR_MODE_PERFECT_MAC_VLAN) {
++		mode = RTE_FDIR_MODE_PERFECT;
++		dev->data->dev_conf.fdir_conf.mode = mode;
++	}
++
+ 	PMD_INIT_FUNC_TRACE();
+ 
+ 	if (hw->mac.type != ixgbe_mac_82599EB &&

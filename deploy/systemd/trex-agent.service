@@ -1,0 +1,27 @@
+[Unit]
+Description=trex-cli control-plane Agent
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=trex-agent
+Group=trex-agent
+WorkingDirectory=/var/lib/trex-agent
+EnvironmentFile=-/etc/trex-agent/trex-agent.env
+ExecStart=/opt/trex-agent/venv/bin/trex-agent --config /etc/trex-agent/config.yaml
+Restart=on-failure
+RestartSec=5s
+KillSignal=SIGINT
+TimeoutStopSec=5min
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/trex-agent
+CapabilityBoundingSet=
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+
+[Install]
+WantedBy=multi-user.target

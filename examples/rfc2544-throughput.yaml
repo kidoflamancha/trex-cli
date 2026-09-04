@@ -1,0 +1,29 @@
+apiVersion: trex.example.io/v1
+kind: Rfc2544Throughput
+metadata:
+  name: simulated-rfc2544-throughput
+spec:
+  safety:
+    isolatedLab: true
+  ports:
+    tx: lab-west
+    rx: lab-east
+    direction: bidirectional
+  mode: strict
+  packet:
+    ethernet:
+      src:
+        start: "00:00:00:00:00:01"
+        end: "00:00:00:00:00:fe"
+        mode: increment
+      dst: "00:00:00:00:00:02"
+    ipv4:
+      src: 198.18.0.1
+      dst: 198.19.0.1
+    udp:
+      srcPort: 49152
+      dstPort: 7
+  assertion:
+    minimumPercentLineRate:
+      "64": 70
+      "1518": 95

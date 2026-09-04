@@ -1,0 +1,43 @@
+bindHost: 127.0.0.1
+bindPort: 28080
+databasePath: .state/pcap-jobs-v2.sqlite3
+artifactRoot: .state/pcap-artifacts
+trafficProfileRoot: ../traffic-profiles
+labPathRoot: ../lab-paths
+planRoot: .state/pcap-plans
+captureRoot: .state/pcap-captures
+logicalPorts: [lab-west, lab-east]
+engine:
+  mode: remote-trex
+  server: 127.0.0.1
+  syncPort: 14501
+  asyncPort: 14500
+  clientPath: ../.trex-client/v3.08/interactive
+  externalLibsPath: ../.trex-client/local-external-libs
+  username: trex-cli-pcap
+  timeoutSeconds: 5
+  portMapping:
+    lab-west: 0
+    lab-east: 1
+  pcapRemoteRoot: /dev/shm/trex-cli-pcap
+safety:
+  version: testdev-pcap-v1
+  allowedCidrs: [198.18.0.0/15]
+  allowedMacPrefixes: ["02:00:00", "02:00:00"]
+  maxConcurrentJobs: 1
+  maxJobTimeout: 10m
+  maxPortWaitTimeout: 30s
+  maxRunDuration: 60s
+  maxBurstPackets: 1000000
+  maxPercentL1: 100
+  maxPps: 40000000
+  maxBpsL1: 2500000000
+  maxBpsL2: 2500000000
+auth:
+  tokens:
+    - name: testdev-operator
+      role: operator
+      env: TREX_OPERATOR_TOKEN
+    - name: testdev-reader
+      role: read-only
+      env: TREX_READER_TOKEN

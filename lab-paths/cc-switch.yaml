@@ -1,0 +1,22 @@
+apiVersion: trex.example.io/catalog/v1
+kind: LabPath
+metadata:
+  name: cc-switch
+  revision: 1
+  description: Current two-port cc-switch development path.
+roles:
+  client:
+    port: lab-west
+    mac: "a0:36:9f:20:da:48"
+    ipv4: "198.18.0.1"
+  server:
+    port: lab-east
+    mac: "a0:36:9f:20:da:4a"
+    ipv4: "198.19.0.1"
+safety:
+  isolatedLab: true
+  broadcastDomain: true
+runDefaults:
+  portWaitTimeout: 30s
+  trafficJobTimeout: 10m
+  benchmarkJobTimeout: 120m

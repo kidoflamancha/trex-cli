@@ -1,0 +1,31 @@
+apiVersion: trex.example.io/v1
+kind: StatelessTraffic
+metadata:
+  name: testdev-1pps-1s
+spec:
+  safety:
+    isolatedLab: true
+  ports:
+    tx: lab-west
+    rx: lab-east
+    direction: unidirectional
+  limits:
+    portWaitTimeout: 30s
+    jobTimeout: 60s
+  packet:
+    frameSize: 128
+    ethernet:
+      src: 02:00:00:02:00:00
+      dst: 02:00:00:02:00:00
+    ipv4:
+      src: 198.18.0.1
+      dst: 198.19.0.1
+    udp:
+      srcPort: 49152
+      dstPort: 7
+  rate:
+    unit: pps
+    value: 1
+  duration: 1s
+  assertions:
+    maxLossPercent: 0

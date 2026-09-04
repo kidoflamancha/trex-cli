@@ -1,0 +1,29 @@
+apiVersion: trex.example.io/v1
+kind: StatelessTraffic
+metadata:
+  name: layer-2-mac-range
+spec:
+  safety:
+    isolatedLab: true
+  ports:
+    tx: lab-west
+    rx: lab-east
+    direction: bidirectional
+  packet:
+    frameSize: 128
+    ethernet:
+      src:
+        start: "00:00:00:00:00:01"
+        end: "00:00:00:00:00:fe"
+        mode: increment
+      dst: "00:00:00:00:01:01"
+    vlan:
+      id: 100
+      priority: 0
+    payloadHex: "aabbccdd"
+  rate:
+    unit: pps
+    value: 1000
+  duration: 10s
+  assertions:
+    maxLossPercent: 0

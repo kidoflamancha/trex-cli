@@ -1,0 +1,34 @@
+apiVersion: trex.example.io/v1
+kind: StatelessTraffic
+metadata:
+  name: simulated-ipv4-baseline
+spec:
+  safety:
+    isolatedLab: true
+  ports:
+    tx: lab-west
+    rx: lab-east
+    direction: unidirectional
+  packet:
+    frameSize: 128
+    ethernet:
+      src:
+        start: "00:00:00:00:00:01"
+        end: "00:00:00:00:00:fe"
+        mode: increment
+      dst: "00:00:00:00:00:02"
+    ipv4:
+      src:
+        start: 198.18.0.1
+        end: 198.18.0.254
+        mode: increment
+      dst: 198.19.0.1
+    udp:
+      srcPort: 49152
+      dstPort: 53
+  rate:
+    unit: percent_l1
+    value: 10
+  duration: 30s
+  assertions:
+    maxLossPercent: 0

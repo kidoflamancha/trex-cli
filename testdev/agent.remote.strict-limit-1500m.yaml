@@ -1,0 +1,42 @@
+bindHost: 127.0.0.1
+bindPort: 8080
+databasePath: .state/jobs.sqlite3
+artifactRoot: .state/artifacts
+logicalPorts: [lab-west, lab-east]
+engine:
+  mode: remote-trex
+  server: 127.0.0.1
+  syncPort: 14501
+  asyncPort: 14500
+  clientPath: ../.trex-client/v3.08/interactive
+  externalLibsPath: ../.trex-client/local-external-libs
+  username: trex-cli
+  timeoutSeconds: 5
+  portMapping:
+    lab-west: 0
+    lab-east: 1
+safety:
+  version: testdev-strict-limit-1500m-v1
+  allowedCidrs: [198.18.0.0/15]
+  allowedMacPrefixes: ["02:00:00", "02:00:00"]
+  maxConcurrentJobs: 1
+  maxJobTimeout: 120m
+  maxPortWaitTimeout: 30s
+  maxRunDuration: 60s
+  maxBurstPackets: 1000
+  maxPercentL1: 100
+  calibrationBootstrapMaxPercentL1: 0.01
+  maxCalibrationGrowthFactor: 10
+  maxCalibrationAge: 168h
+  # 64B at 2.5Gbps L1 is about 37.2 Mpps; leave a small policy margin.
+  maxPps: 40000000
+  maxBpsL1: 2500000000
+  maxBpsL2: 2500000000
+auth:
+  tokens:
+    - name: testdev-operator
+      role: operator
+      env: TREX_OPERATOR_TOKEN
+    - name: testdev-reader
+      role: read-only
+      env: TREX_READER_TOKEN

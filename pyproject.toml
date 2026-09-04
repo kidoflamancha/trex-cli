@@ -1,0 +1,61 @@
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "trex-cli"
+version = "1.0.0"
+description = "Declarative, auditable control plane for Cisco TRex tests"
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.12"
+dependencies = [
+  "dpkt>=1.9,<2",
+  "fastapi>=0.115,<1",
+  "httpx>=0.27,<1",
+  "pydantic>=2.9,<3",
+  "PyYAML>=6.0,<7",
+  "typer>=0.12,<1",
+  "uvicorn>=0.30,<1",
+]
+
+[project.optional-dependencies]
+trex = [
+  "repoze.lru>=0.7,<1",
+  "scapy>=2.6,<3",
+  "simpy>=4,<5",
+  "texttable>=1.7,<2",
+  "pyzmq>=27,<28",
+]
+dev = [
+  "mypy>=1.11,<2",
+  "pytest>=8.3,<9",
+  "pytest-asyncio>=0.24,<1",
+  "ruff>=0.8,<1",
+  "types-PyYAML>=6.0,<7",
+]
+
+[project.scripts]
+trex-cli = "trex_cli.cli:app"
+trex-agent = "trex_cli.agent:app"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "ASYNC", "RUF"]
+ignore = ["B008"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+packages = ["trex_cli"]

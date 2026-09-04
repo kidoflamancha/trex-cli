@@ -1,0 +1,35 @@
+apiVersion: trex.example.io/v1
+kind: Rfc2544Throughput
+metadata:
+  name: testdev-rfc2544-strict-limit-1500m
+spec:
+  safety:
+    isolatedLab: true
+  ports:
+    tx: lab-west
+    rx: lab-east
+    direction: unidirectional
+  mode: strict
+  limits:
+    portWaitTimeout: 30s
+    jobTimeout: 120m
+  packet:
+    ethernet:
+      src: 02:00:00:02:00:00
+      dst: 02:00:00:02:00:00
+    ipv4:
+      src: 198.18.0.1
+      dst: 198.19.0.1
+    udp:
+      srcPort: 49152
+      dstPort: 7
+  # Conservative acceptance floors from the completed 1500 Mbps characterization.
+  assertion:
+    minimumPercentLineRate:
+      "64": 78
+      "128": 68
+      "256": 63
+      "512": 60
+      "1024": 60
+      "1280": 60
+      "1518": 60

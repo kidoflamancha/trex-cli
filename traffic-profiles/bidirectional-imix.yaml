@@ -1,0 +1,43 @@
+apiVersion: trex.example.io/catalog/v1
+kind: TrafficProfile
+metadata:
+  name: bidirectional-imix
+  revision: 1
+  description: Explicit bidirectional IPv4/UDP workload with an IMIX-like forward distribution.
+parameters: {}
+flows:
+  client-to-server:
+    from: client
+    to: server
+    weight: 1
+    frame:
+      sizes:
+        - {wireSize: 64, weight: 60}
+        - {wireSize: 512, weight: 30}
+        - {wireSize: 1518, weight: 10}
+    packet:
+      ethernet:
+        src: "${role.client.mac}"
+        dst: "${role.server.mac}"
+      ipv4:
+        src: "${role.client.ipv4}"
+        dst: "${role.server.ipv4}"
+      udp:
+        srcPort: 49152
+        dstPort: 7
+  server-to-client:
+    from: server
+    to: client
+    weight: 1
+    frame:
+      wireSize: 128
+    packet:
+      ethernet:
+        src: "${role.server.mac}"
+        dst: "${role.client.mac}"
+      ipv4:
+        src: "${role.server.ipv4}"
+        dst: "${role.client.ipv4}"
+      udp:
+        srcPort: 7
+        dstPort: 49152
