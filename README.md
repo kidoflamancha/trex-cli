@@ -200,6 +200,10 @@ MAC addresses are fail-closed independently from IP CIDRs. Configure `allowedMac
 varies the low 32 bits, so a MAC range must remain inside one 16-bit prefix. Set
 `allowArbitraryUnicastMac: true` only for a lab that intentionally permits every unicast MAC.
 
+Stateless PCAP replay currently accepts IPv4 and IPv4 ARP packets. Captures containing IPv6 or
+other unsupported network protocols may be analyzed, but replay is rejected until their addresses
+can be fully validated. Older preserved ARP Plans without ARP endpoint facts must be recreated.
+
 PCAP replay uses immutable Capture Resources. Stateless replay sends rewritten Ethernet frames
 through STL; stateful replay extracts reconstructible TCP/HTTP application exchanges and lets ASTF
 regenerate the TCP transport behavior. A single-session Plan selects one exchange. A Capture

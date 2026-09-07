@@ -89,10 +89,27 @@ def compile_replay(
 
 
 def _rewrite_packet(raw_packet: bytes, document: PcapReplayDocument) -> bytes:
+    ethernet = dpkt.ethernet.Ethernet(raw_packet)
+    payload = ethernet.data
+    if not isinstance(payload, (dpkt.ip.IP, dpkt.arp.ARP)):
+        raise ValueError("replay cannot safely authorize this network protocol")
+    if isinstance(payload, dpkt.arp.ARP) and (
+        payload.pro != dpkt.ethernet.ETH_TYPE_IP or payload.pln != 4
+    ):
+        raise ValueError("replay cannot safely authorize this ARP protocol")
     address = document.spec.address
     if not isinstance(address, ReplayRewriteAddress):
+        endpoints = (
+            (payload.src, payload.dst)
+            if isinstance(payload, dpkt.ip.IP)
+            else (payload.spa, payload.tpa)
+        )
+        if any(
+            str(ipaddress.IPv4Address(value)) not in document.spec.capture.ipv4_endpoints
+            for value in endpoints
+        ):
+            raise ValueError("capture contains addresses absent from the authorized Replay Plan")
         return raw_packet
-    ethernet = dpkt.ethernet.Ethernet(raw_packet)
     ethernet.src = bytes.fromhex(address.source_mac.replace(":", ""))
     ethernet.dst = bytes.fromhex(address.destination_mac.replace(":", ""))
     payload = ethernet.data

@@ -4,9 +4,34 @@ import struct
 from pathlib import Path
 
 import dpkt  # type: ignore[import-untyped]
+import pytest
 
 from trex_cli.models import PcapReplayDocument
 from trex_cli.pcap_replay import compile_replay
+
+
+@pytest.mark.parametrize("preserve", [False, True])
+def test_ipv6_is_rejected_even_for_legacy_plans(tmp_path: Path, preserve: bool) -> None:
+    from trex_cli.models import ReplayPreserveAddress
+
+    document = _document({"mode": "fixed-rate", "rate": {"value": 100, "unit": "pps"}})
+    if preserve:
+        document.spec.address = ReplayPreserveAddress(mode="preserve", policyVersion="test")
+    source = tmp_path / "ipv6.pcap"
+    packet = dpkt.ethernet.Ethernet(
+        src=bytes.fromhex("000000000001"),
+        dst=bytes.fromhex("000000000002"),
+        type=dpkt.ethernet.ETH_TYPE_IP6,
+        data=dpkt.ip6.IP6(
+            src=bytes.fromhex("20010db8000000000000000000000001"),
+            dst=bytes.fromhex("20010db8000000000000000000000002"),
+        ),
+    )
+    with source.open("wb") as output:
+        writer = dpkt.pcap.Writer(output)
+        writer.writepkt(bytes(packet), 1)
+    with pytest.raises(ValueError, match="cannot safely authorize"):
+        compile_replay(source, tmp_path / "compiled", document)
 
 
 def _capture() -> bytes:

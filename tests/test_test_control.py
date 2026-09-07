@@ -34,6 +34,37 @@ from trex_cli.test_plan import TestPlanModule as PlanModule
 from .conftest import build_jobs, make_config, wait_terminal
 
 
+def test_reused_tcp_endpoints_keep_distinct_sessions_and_template_weight() -> None:
+    packets = [
+        dpkt.ethernet.Ethernet(raw) for _, raw in dpkt.pcap.Reader(BytesIO(_http_session_pcap()))
+    ]
+    analyzer = StatefulSessionAnalyzer()
+    for _ in range(2):
+        for packet in packets:
+            analyzer.observe(packet)
+    result = analyzer.finish()
+    assert result is not None
+    assert result.tcp_session_count == result.reconstructible_session_count == 2
+    assert len({session.id for session in result.sessions}) == 2
+    assert result.workload_templates[0].occurrence_count == 2
+    assert all(session.exchange_count == 2 for session in result.sessions)
+    for session in result.sessions:
+        assert len(analyzer.template(session.id).exchanges) == 2
+
+
+def test_retransmitted_syn_before_syn_ack_stays_in_the_same_session() -> None:
+    analyzer = StatefulSessionAnalyzer()
+    packets = list(dpkt.pcap.Reader(BytesIO(_http_session_pcap())))
+    analyzer.observe(dpkt.ethernet.Ethernet(packets[0][1]))
+    for _, raw in packets:
+        analyzer.observe(dpkt.ethernet.Ethernet(raw))
+    result = analyzer.finish()
+    assert result is not None
+    assert result.tcp_session_count == 1
+    assert result.reconstructible_session_count == 1
+    assert result.sessions[0].issues == []
+
+
 def _one_packet_pcap() -> bytes:
     ethernet = bytes.fromhex(
         "00000000000200000000000108004500001c0000000040110000c6120001c6130001c000000700080000"

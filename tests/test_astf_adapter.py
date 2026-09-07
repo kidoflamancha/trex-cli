@@ -304,6 +304,7 @@ async def test_remote_astf_engine_runs_weighted_templates_with_traffic_group_res
     assert client.loaded is not None
     templates = client.loaded.values["templates"]
     assert len(templates) == 2
+    assert all(template.values["client_template"].values["cont"] for template in templates)
     assert sorted(template.values["client_template"].values["cps"] for template in templates) == [
         10.0,
         20.0,

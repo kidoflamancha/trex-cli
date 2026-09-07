@@ -433,7 +433,7 @@ class RemoteTrexAstfEngine:
                 port=template.server_port,
                 cps=template.cps,
                 limit=template.max_active_connections,
-                cont=False,
+                cont=True,
             )
             server_template = api.ASTFTCPServerTemplate(
                 program=server_program,

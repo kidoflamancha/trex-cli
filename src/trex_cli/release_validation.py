@@ -164,7 +164,7 @@ def _validate_schemas(failures: list[str]) -> int:
 def _validate_deployment_assets(root: Path, failures: list[str]) -> int:
     assets = {
         "LICENSE": ("Apache License", "Version 2.0, January 2004"),
-        "CHANGELOG.md": ("1.0.0 - 2026-09-05",),
+        "CHANGELOG.md": (f"{__version__} -",),
         "docs/compatibility.md": ("Compatibility policy", "GET /version"),
         "docs/operations.md": ("TLS deployment", "online rotation"),
         "docs/release-evaluation.md": ("Release evaluation", "TestControl task matrix"),

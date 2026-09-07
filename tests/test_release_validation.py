@@ -13,7 +13,7 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 def test_release_resources_and_schemas_are_valid() -> None:
     report = validate_release_resources(REPOSITORY_ROOT)
 
-    assert report.version == "1.0.0"
+    assert report.version == "1.0.1"
     assert report.config_count == 1
     assert report.job_example_count == 3
     assert report.legacy_profile_count == 1

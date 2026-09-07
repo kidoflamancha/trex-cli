@@ -10,6 +10,7 @@ from datetime import datetime, timedelta
 from typing import Any
 
 from trex_cli import __version__
+from trex_cli.address_policy import ipv4_range_allowed, mac_range_allowed
 from trex_cli.artifacts import ArtifactStore
 from trex_cli.config import AgentConfig, RemoteTrexEngineConfig
 from trex_cli.engine import ExecutionMarker, RunHandle, TrafficEngine
@@ -712,13 +713,12 @@ class TestJobs:
                         category="POLICY",
                         message=f"{label} IPv4 pool exceeds maxAddressPoolSize",
                     )
-                for endpoint in (pool.start, pool.end):
-                    if not any(ipaddress.ip_address(endpoint) in subnet for subnet in allowed):
-                        raise TrexCliError(
-                            code="UNSAFE_REQUEST",
-                            category="POLICY",
-                            message=f"{label} IPv4 pool is outside allowedCidrs",
-                        )
+                if not ipv4_range_allowed(pool.start, pool.end, policy.allowed_cidrs):
+                    raise TrexCliError(
+                        code="UNSAFE_REQUEST",
+                        category="POLICY",
+                        message=f"{label} IPv4 pool is outside allowedCidrs",
+                    )
             capacity = (
                 client_pool.cardinality * document.spec.client.transport_port_pool.cardinality
             )
@@ -843,12 +843,10 @@ class TestJobs:
                     )
                 if not policy.allow_arbitrary_unicast_mac:
                     prefixes = [prefix.lower() for prefix in policy.allowed_mac_prefixes]
-                    if any(
-                        not any(value.lower().startswith(prefix) for prefix in prefixes)
-                        for value in (
-                            document.spec.clients.mac_start,
-                            document.spec.clients.mac_end,
-                        )
+                    if not mac_range_allowed(
+                        document.spec.clients.mac_start,
+                        document.spec.clients.mac_end,
+                        prefixes,
                     ):
                         raise TrexCliError(
                             code="UNSAFE_REQUEST",
@@ -871,12 +869,10 @@ class TestJobs:
                     )
                 if not policy.allow_arbitrary_unicast_mac:
                     prefixes = [prefix.lower() for prefix in policy.allowed_mac_prefixes]
-                    if any(
-                        not any(value.lower().startswith(prefix) for prefix in prefixes)
-                        for value in (
-                            document.spec.senders.mac_start,
-                            document.spec.senders.mac_end,
-                        )
+                    if not mac_range_allowed(
+                        document.spec.senders.mac_start,
+                        document.spec.senders.mac_end,
+                        prefixes,
                     ):
                         raise TrexCliError(
                             code="UNSAFE_REQUEST",

@@ -1,10 +1,10 @@
-# Release evaluation: trex-cli 1.0.0
+# Release evaluation: trex-cli 1.0.1
 
-Date: 2026-09-05
+Date: 2026-09-07
 
 ## Release decision
 
-The trex-cli software is ready for a 1.0.0 release when the reproducible gate below passes. The
+The trex-cli software is ready for a 1.0.1 release when the reproducible gate below passes. The
 release provides a stable, declarative TestControl interface for arbitrary supported DUTs; device
 configuration remains an administrator-owned LabPath/fixture concern and is not embedded in the
 TRex control plane.
@@ -80,12 +80,12 @@ alongside the release record. CI performs the same gate and uploads the wheel an
 
 ### Candidate verification record
 
-The 2026-09-05 local candidate passed resource validation (seven deployment assets), Ruff, strict
+The 2026-09-07 local candidate passed resource validation (seven deployment assets), Ruff, strict
 mypy over 30 source files, and 193 pytest cases. A clean virtual environment installed the wheel
-with dependencies, exercised both console entry points, reported package version `1.0.0`, and
+with dependencies, exercised both console entry points, reported package version `1.0.1`, and
 re-ran release validation successfully. The candidate wheel is
-`trex_cli-1.0.0-py3-none-any.whl`, SHA-256
-`2cc063b81eaef6881b596ee87466f3c9420e3a9bd0d3ba40c20ca738d116b172`. This local run used Python
+`trex_cli-1.0.1-py3-none-any.whl`, SHA-256
+`5848f522ec0dc67ecaed8d25dd0ece0a554fdcf041b529010822544589b275df`. This local run used Python
 3.14; the repository CI remains the authoritative Python 3.12 gate before publishing the artifact.
 
 ## Residual risks and non-blocking actions

@@ -30,7 +30,7 @@ async def test_unversioned_database_is_backed_up_and_migrated_without_data_loss(
         migration = upgraded.connection.execute(
             "SELECT version, agent_version FROM schema_migrations"
         ).fetchone()
-        assert tuple(migration) == (LATEST_SCHEMA_VERSION, "1.0.0")
+        assert tuple(migration) == (LATEST_SCHEMA_VERSION, "1.0.1")
         assert (await upgraded.port_statuses())["lab-west"]["generation"] == 7
     finally:
         await upgraded.close()

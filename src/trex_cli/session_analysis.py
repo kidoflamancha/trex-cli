@@ -78,6 +78,9 @@ class _Flow:
     client_port: int
     server_ip: bytes
     server_port: int
+    generation: int = 0
+    closed: bool = False
+    initial_sequence: int | None = None
     packet_count: int = 0
     saw_syn: bool = False
     saw_syn_ack: bool = False
@@ -107,6 +110,7 @@ class StatefulSessionAnalyzer:
         maximum_total_payload_bytes: int = 64 * 1024 * 1024,
     ) -> None:
         self._flows: dict[tuple[tuple[bytes, int], tuple[bytes, int]], _Flow] = {}
+        self._completed_flows: list[_Flow] = []
         self._maximum_reported_sessions = maximum_reported_sessions
         self._maximum_workload_templates = maximum_workload_templates
         self._maximum_tracked_sessions = maximum_tracked_sessions
@@ -126,8 +130,20 @@ class StatefulSessionAnalyzer:
         key = (ordered[0], ordered[1])
         flow = self._flows.get(key)
         initial_syn = bool(tcp.flags & dpkt.tcp.TH_SYN) and not bool(tcp.flags & dpkt.tcp.TH_ACK)
+        generation = 0
+        if flow is not None and initial_syn:
+            if (
+                flow.closed
+                or flow.saw_syn_ack
+                or flow.exchanges
+                or flow.initial_sequence != int(tcp.seq)
+            ):
+                generation = flow.generation + 1
+                self._completed_flows.append(flow)
+                del self._flows[key]
+                flow = None
         if flow is None:
-            if len(self._flows) >= self._maximum_tracked_sessions:
+            if len(self._flows) + len(self._completed_flows) >= self._maximum_tracked_sessions:
                 self._omitted_tcp_packet_count += 1
                 return
             flow = _Flow(
@@ -135,16 +151,20 @@ class StatefulSessionAnalyzer:
                 client_port=source[1],
                 server_ip=destination[0],
                 server_port=destination[1],
+                generation=generation,
             )
             self._flows[key] = flow
             if not initial_syn:
                 flow.issue("capture does not start with the client SYN")
         flow.packet_count += 1
+        if tcp.flags & (dpkt.tcp.TH_FIN | dpkt.tcp.TH_RST):
+            flow.closed = True
         client_to_server = source == (flow.client_ip, flow.client_port)
         if initial_syn:
             if not client_to_server:
                 flow.issue("conflicting client direction")
             flow.saw_syn = True
+            flow.initial_sequence = int(tcp.seq)
             flow.next_client_sequence = int(tcp.seq) + 1
         elif tcp.flags & dpkt.tcp.TH_SYN and tcp.flags & dpkt.tcp.TH_ACK:
             if client_to_server:
@@ -187,9 +207,12 @@ class StatefulSessionAnalyzer:
             flow.exchanges.append((direction, payload))
 
     def finish(self) -> StatefulCaptureAnalysis | None:
-        if not self._flows:
+        if not self._flows and not self._completed_flows:
             return None
-        analyzed = [(flow, self._session(flow)) for flow in self._flows.values()]
+        analyzed = [
+            (flow, self._session(flow))
+            for flow in (*self._completed_flows, *self._flows.values())
+        ]
         analyzed.sort(key=lambda item: item[1].id)
         sessions = [session for _, session in analyzed]
         reported = sessions[: self._maximum_reported_sessions]
@@ -242,7 +265,7 @@ class StatefulSessionAnalyzer:
         )
 
     def template(self, session_id: str) -> SessionTemplate:
-        for flow in self._flows.values():
+        for flow in (*self._completed_flows, *self._flows.values()):
             session = self._session(flow)
             if session.id == session_id:
                 if not session.reconstructible:
@@ -279,6 +302,8 @@ class StatefulSessionAnalyzer:
         identity.update(flow.client_port.to_bytes(2, "big"))
         identity.update(flow.server_ip)
         identity.update(flow.server_port.to_bytes(2, "big"))
+        if flow.generation:
+            identity.update(b"generation:" + flow.generation.to_bytes(8, "big"))
         for direction, payload in flow.exchanges:
             identity.update(b"c" if direction == "client" else b"s")
             identity.update(len(payload).to_bytes(8, "big"))

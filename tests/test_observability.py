@@ -66,7 +66,7 @@ def test_runtime_metrics_render_bounded_counters_histograms_and_gauges() -> None
         artifact_bytes=4096,
     )
 
-    assert 'trex_agent_info{engine="simulated",simulated="true",version="1.0.0"} 1' in rendered
+    assert 'trex_agent_info{engine="simulated",simulated="true",version="1.0.1"} 1' in rendered
     assert 'trex_agent_jobs{state="SUCCEEDED"} 3' in rendered
     assert 'trex_agent_logical_ports{status="AVAILABLE"} 2' in rendered
     assert "trex_agent_artifacts 9" in rendered

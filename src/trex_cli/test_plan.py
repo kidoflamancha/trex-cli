@@ -9,6 +9,7 @@ from typing import Any, BinaryIO, Literal, cast
 
 from pydantic import Field, ValidationError, field_validator, model_validator
 
+from trex_cli.address_policy import ipv4_range_allowed, mac_range_allowed
 from trex_cli.arp_storm import ARP_REQUEST_WIRE_SIZE, arp_sender_ipv4_end, arp_sender_mac_end
 from trex_cli.config import SafetyPolicy
 from trex_cli.dhcp_storm import (
@@ -761,6 +762,8 @@ class TestPlanModule:
 
         analysis = capture.document.analysis
         if address_mode == "rewrite":
+            if analysis.protocols.get("unsupported-network", 0):
+                raise TestPlanError("replay cannot safely authorize this network protocol")
             if any(
                 value is None
                 for value in (source.mac, destination.mac, source.ipv4, destination.ipv4)
@@ -1042,9 +1045,8 @@ class TestPlanModule:
             raise TestPlanError(str(error)) from error
         if not policy.allow_arbitrary_unicast_mac:
             prefixes = [prefix.lower() for prefix in policy.allowed_mac_prefixes]
-            for address in (client.mac, mac_end):
-                if not any(address.lower().startswith(prefix) for prefix in prefixes):
-                    raise TestPlanError("DHCP client identity pool is outside allowedMacPrefixes")
+            if not mac_range_allowed(client.mac, mac_end, prefixes):
+                raise TestPlanError("DHCP client identity pool is outside allowedMacPrefixes")
         wire_size = dhcp_discover_wire_size(payload)
         estimated_bps_l1 = pps * (wire_size + 20) * 8
         if pps > policy.max_pps:
@@ -1149,10 +1151,7 @@ class TestPlanModule:
             raise TestPlanError(str(error)) from error
         if not policy.allow_arbitrary_unicast_mac:
             prefixes = [prefix.lower() for prefix in policy.allowed_mac_prefixes]
-            if any(
-                not any(address.lower().startswith(prefix) for prefix in prefixes)
-                for address in (sender.mac, mac_end)
-            ):
+            if not mac_range_allowed(sender.mac, mac_end, prefixes):
                 raise TestPlanError("ARP sender identity pool is outside allowedMacPrefixes")
         networks = [ipaddress.ip_network(cidr, strict=False) for cidr in policy.allowed_cidrs]
         sender_range_allowed = any(
@@ -1456,7 +1455,6 @@ class TestPlanModule:
             raise TestPlanError("cps exceeds the configured SafetyPolicy maximum")
         if max_active_connections > policy.max_active_connections:
             raise TestPlanError("maxActiveConnections exceeds the configured SafetyPolicy maximum")
-        allowed = [ipaddress.ip_network(cidr, strict=False) for cidr in policy.allowed_cidrs]
         for label, start, end in (
             ("client", client_start, client_end),
             ("server", server_start, server_end),
@@ -1468,7 +1466,7 @@ class TestPlanModule:
             cardinality = int(last) - int(first) + 1
             if cardinality > policy.max_address_pool_size:
                 raise TestPlanError(f"{label} IPv4 pool exceeds maxAddressPoolSize")
-            if not all(any(address in network for network in allowed) for address in (first, last)):
+            if not ipv4_range_allowed(start, end, policy.allowed_cidrs):
                 raise TestPlanError(f"{label} IPv4 pool is outside allowedCidrs")
         if client_port_end < client_port_start:
             raise TestPlanError("client transport port pool end precedes start")
@@ -1611,7 +1609,6 @@ class TestPlanModule:
             raise TestPlanError("cps exceeds the configured SafetyPolicy maximum")
         if max_active_connections > policy.max_active_connections:
             raise TestPlanError("maxActiveConnections exceeds the configured SafetyPolicy maximum")
-        allowed = [ipaddress.ip_network(cidr, strict=False) for cidr in policy.allowed_cidrs]
         for label, start, end in (
             ("client", client_start, client_end),
             ("server", server_start, server_end),
@@ -1623,7 +1620,7 @@ class TestPlanModule:
             cardinality = int(last) - int(first) + 1
             if cardinality > policy.max_address_pool_size:
                 raise TestPlanError(f"{label} IPv4 pool exceeds maxAddressPoolSize")
-            if not all(any(address in network for network in allowed) for address in (first, last)):
+            if not ipv4_range_allowed(start, end, policy.allowed_cidrs):
                 raise TestPlanError(f"{label} IPv4 pool is outside allowedCidrs")
         if client_port_end < client_port_start:
             raise TestPlanError("client transport port pool end precedes start")
@@ -1744,6 +1741,8 @@ class TestPlanModule:
         if policy is None:
             raise TestPlanError("preserve requires a configured SafetyPolicy")
         analysis = capture.analysis
+        if analysis.protocols.get("unsupported-network", 0):
+            raise TestPlanError("replay cannot safely authorize this network protocol")
         if analysis.safety.has_broadcast or analysis.safety.has_multicast:
             raise TestPlanError(
                 "preserve rejects captures containing broadcast or multicast packets"

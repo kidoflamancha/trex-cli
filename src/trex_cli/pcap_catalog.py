@@ -310,6 +310,13 @@ def analyze_capture(path: Path) -> CaptureAnalysis:
                         _increment(protocols, "icmp")
                 elif isinstance(payload, dpkt.arp.ARP):
                     _increment(protocols, "arp")
+                    if payload.pro != dpkt.ethernet.ETH_TYPE_IP or payload.pln != 4:
+                        _increment(protocols, "unsupported-network")
+                    else:
+                        endpoints.add(str(ipaddress.IPv4Address(payload.spa)))
+                        endpoints.add(str(ipaddress.IPv4Address(payload.tpa)))
+                else:
+                    _increment(protocols, "unsupported-network")
     except (dpkt.NeedData, dpkt.UnpackError, ValueError) as error:
         raise ValueError(f"invalid or unsupported PCAP: {error}") from error
     duration = (

@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.0.1 - 2026-09-07
+
+### Fixed
+
+- Validate every address in stateful IPv4 pools and require one authorized prefix to cover
+  DHCP/ARP MAC pools, consistently at planning and execution time.
+- Reject unsupported network protocols (including IPv6) in stateless PCAP replay planning and
+  packet compilation. Include ARP IPv4 endpoints in capture safety analysis.
+- Keep ASTF flows replenished within the active-connection limit throughout the requested run.
+- Separate TCP connections that reuse endpoint tuples; preserve independent session identity and
+  workload occurrence weights, while rejecting repeated SYNs as ambiguous captures.
+
 ## 1.0.0 - 2026-09-05
 
 ### Added
